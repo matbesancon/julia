@@ -18,9 +18,9 @@ Other constructors:
 * `Channel(sz)`: equivalent to `Channel{Any}(sz)`
 """
 mutable struct Channel{T} <: AbstractChannel{T}
-    cond_take::Condition                 # waiting for data to become available
-    cond_wait::Condition                 # waiting for data to become maybe available
-    cond_put::Condition                  # waiting for a writeable slot
+    cond_take::Threads.Condition                 # waiting for data to become available
+    cond_wait::Threads.Condition                 # waiting for data to become maybe available
+    cond_put::Threads.Condition                  # waiting for a writeable slot
     state::Symbol
     excp::Union{Exception, Nothing}      # exception to be thrown when state != :open
 
@@ -32,8 +32,8 @@ mutable struct Channel{T} <: AbstractChannel{T}
             throw(ArgumentError("Channel size must be either 0, a positive integer or Inf"))
         end
         lock = ReentrantLock()
-        cond_put, cond_take = Condition(lock), Condition(lock)
-        cond_wait = (sz == 0 ? Condition(lock) : cond_take) # wait is distinct from take iff unbuffered
+        cond_put, cond_take = Threads.Condition(lock), Threads.Condition(lock)
+        cond_wait = (sz == 0 ? Threads.Condition(lock) : cond_take) # wait is distinct from take iff unbuffered
         return new(cond_take, cond_wait, cond_put, :open, nothing, Vector{T}(), sz)
     end
 end
